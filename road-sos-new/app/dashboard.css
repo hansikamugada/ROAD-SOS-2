@@ -34,6 +34,9 @@
 .admin-access-card{max-width:720px;margin:20px auto;padding:28px}
 .admin-access-card h1{font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:-.04em}
 .admin-access-card p{line-height:1.7}
+.admin-access-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.admin-login-page .login-card{border-top-color:#263f46}
+.admin-login-page .login-card .eyebrow{color:#536f6d}
 
 /* ROAD SOS administrator operations workspace */
 .admin-workspace{display:flex;min-height:calc(100vh - 72px);background:#f4f3ed;color:#192e37}
