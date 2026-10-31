@@ -1,0 +1,18 @@
+▲ Next.js 16.4.3 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.16:3000
+✓ Ready in 1243ms
+✓ Running next.config.ts took 135ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+○ Compiling /page ...
+ GET / 200 in 775ms (next.js: 404ms, application-code: 371ms)
+ GET / 200 in 54ms (next.js: 3ms, application-code: 51ms)
+ GET /auth/login 200 in 105ms (next.js: 78ms, application-code: 27ms)
+ GET /auth/login 200 in 23ms (next.js: 2.0ms, application-code: 21ms)
+ GET /auth/register 200 in 48ms (next.js: 27ms, application-code: 20ms)
+ GET / 200 in 37ms (next.js: 7ms, application-code: 30ms)
