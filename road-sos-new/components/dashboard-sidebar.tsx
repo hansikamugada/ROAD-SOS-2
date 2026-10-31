@@ -4,7 +4,7 @@ import { Activity, ArrowRight, Compass, LifeBuoy, MapPin, Shield, ShieldAlert, U
 export function DashboardSidebar({role,active,name}:{role:'user'|'mechanic';active:string;name:string}) {
   const driver=role==='user';
   const links=driver?[
-    ['/dashboard','Overview',Activity],['/find-mechanics','Find mechanics',Compass],['/requests','My requests',WalletCards],['/emergency','Emergency contacts',Users],['/profile','My profile',Shield],
+    ['/dashboard','Overview',Activity],['/requests/new','Request help',LifeBuoy],['/find-mechanics','Find mechanics',Compass],['/requests','My requests',WalletCards],['/emergency','Emergency contacts',Users],['/profile','My profile',Shield],
   ] as const:[
     ['/mechanic/dashboard','Overview',Activity],['/mechanic/dashboard#requests','Service requests',WalletCards],['/profile','Business profile',Wrench],
   ] as const;
