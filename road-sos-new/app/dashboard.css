@@ -31,3 +31,6 @@
 .atlas-quick-grid .quickCard-primary{background:linear-gradient(115deg,#fff4e9,#fffdf8);border-color:#efc4ae}
 .atlas-quick-grid .quickCard-primary strong{color:#a9492d}
 @media(max-width:760px){.quickGrid{grid-template-columns:1fr}}
+.admin-access-card{max-width:720px;margin:20px auto;padding:28px}
+.admin-access-card h1{font-size:clamp(26px,4vw,36px);line-height:1.15;letter-spacing:-.04em}
+.admin-access-card p{line-height:1.7}

@@ -9,29 +9,72 @@ type Props = { profile: { full_name: string; phone: string | null; address: stri
 export default function ProfileEditor({ profile, vehicle, contacts, mechanic, email }: Props) {
   const [message,setMessage]=useState(''); const [busy,setBusy]=useState(false); const router=useRouter();
   async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setBusy(true); setMessage(''); const form=new FormData(e.currentTarget); const client=createClient();
-    const { data: { user }, error: authError } = await client.auth.getUser();
-    if (authError || !user) { setMessage('Your session expired. Please sign in again.'); setBusy(false); return; }
-    const { error: profileError } = await client.from('profiles').update({ full_name: String(form.get('full_name')), phone: String(form.get('phone')), address: String(form.get('address')) }).eq('id', user.id);
-    if (profileError) { setMessage(profileError.message); setBusy(false); return; }
-    if (profile.role === 'user') {
-      const type=String(form.get('vehicle_type')), model=String(form.get('vehicle_model')), registration=String(form.get('registration_number'));
-      if (type && model && registration) {
-        const result = vehicle ? await client.from('vehicles').update({ vehicle_type:type, model, registration_number:registration }).eq('id',vehicle.id) : await client.from('vehicles').insert({ user_id:user.id, vehicle_type:type, model, registration_number:registration });
-        if (result.error) { setMessage(result.error.message); setBusy(false); return; }
+    e.preventDefault(); setBusy(true); setMessage('');
+    const form = new FormData(e.currentTarget);
+    try {
+      const client = createClient();
+      const { data: { user }, error: authError } = await client.auth.getUser();
+      if (authError || !user) throw new Error('Your session expired. Please sign in again.');
+
+      const { data: savedProfile, error: profileError } = await client.from('profiles')
+        .update({ full_name: String(form.get('full_name')).trim(), phone: String(form.get('phone')).trim(), address: String(form.get('address')).trim() })
+        .eq('id', user.id).select('id').maybeSingle();
+      if (profileError) throw profileError;
+      if (!savedProfile) throw new Error('Your profile was not saved. Please sign in again and retry.');
+
+      if (profile.role === 'user') {
+        const type = String(form.get('vehicle_type')).trim();
+        const model = String(form.get('vehicle_model')).trim();
+        const registration = String(form.get('registration_number')).trim();
+        if (type || model || registration) {
+          if (!type || !model || !registration) throw new Error('Enter the vehicle type, model and registration number to save vehicle details.');
+          const result = vehicle
+            ? await client.from('vehicles').update({ vehicle_type: type, model, registration_number: registration }).eq('id', vehicle.id).select('id').maybeSingle()
+            : await client.from('vehicles').insert({ user_id: user.id, vehicle_type: type, model, registration_number: registration }).select('id').single();
+          if (result.error) throw result.error;
+          if (!result.data) throw new Error('Vehicle details were not saved. Please retry.');
+        }
+
+        const savedContacts = contacts || [];
+        for (let i = 0; i < 2; i++) {
+          const name = String(form.get(`contact${i + 1}_name`)).trim();
+          const phone = String(form.get(`contact${i + 1}_phone`)).trim();
+          const relationship = String(form.get(`contact${i + 1}_relationship`) || 'Other').trim();
+          const old = savedContacts[i];
+          if ((name && !phone) || (!name && phone)) throw new Error(`Enter both a name and phone number for emergency contact ${i + 1}.`);
+          const result = name && phone
+            ? old
+              ? await client.from('emergency_contacts').update({ name, phone, relationship }).eq('id', old.id).select('id').maybeSingle()
+              : await client.from('emergency_contacts').insert({ user_id: user.id, name, phone, relationship }).select('id').single()
+            : old ? await client.from('emergency_contacts').delete().eq('id', old.id).select('id').maybeSingle() : { data: true, error: null };
+          if (result.error) throw result.error;
+          if (!result.data) throw new Error(`Emergency contact ${i + 1} was not saved. Please retry.`);
+        }
+      } else if (profile.role === 'mechanic') {
+        const radius = Number(form.get('service_radius_km'));
+        if (!Number.isFinite(radius) || radius < 1 || radius > 300) throw new Error('Service radius must be between 1 and 300 km.');
+        const { data: savedMechanic, error: mechanicError } = await client.from('mechanics').upsert({
+          id: user.id,
+          mechanic_name: String(form.get('mechanic_name') || form.get('full_name')).trim(),
+          phone: String(form.get('phone')).trim(),
+          garage_name: String(form.get('garage_name')).trim(),
+          services: String(form.get('services')).split(',').map(x => x.trim()).filter(Boolean),
+          address: String(form.get('address')).trim(),
+          service_radius_km: radius,
+          working_hours: String(form.get('working_hours')).trim(),
+          vehicle_types: String(form.get('vehicle_types')).split(',').map(x => x.trim()).filter(Boolean),
+        }, { onConflict: 'id' }).select('id').maybeSingle();
+        if (mechanicError) throw mechanicError;
+        if (!savedMechanic) throw new Error('Workshop details were not saved. Apply the latest database update and retry.');
       }
-      const saved=contacts || [];
-      for (let i=0;i<2;i++) {
-        const name=String(form.get(`contact${i+1}_name`)), phone=String(form.get(`contact${i+1}_phone`)), relationship=String(form.get(`contact${i+1}_relationship`)||'Other');
-        const old=saved[i];
-        const result=name&&phone ? old ? await client.from('emergency_contacts').update({name,phone,relationship}).eq('id',old.id) : await client.from('emergency_contacts').insert({user_id:user.id,name,phone,relationship}) : old ? await client.from('emergency_contacts').delete().eq('id',old.id) : {error:null};
-        if (result.error) { setMessage(result.error.message); setBusy(false); return; }
-      }
-    } else if (profile.role === 'mechanic') {
-      const result=await client.from('mechanics').update({mechanic_name:String(form.get('mechanic_name')),garage_name:String(form.get('garage_name')),services:String(form.get('services')).split(',').map(x=>x.trim()).filter(Boolean),address:String(form.get('address')),service_radius_km:Number(form.get('service_radius_km')),working_hours:String(form.get('working_hours')),vehicle_types:String(form.get('vehicle_types')).split(',').map(x=>x.trim()).filter(Boolean)}).eq('id',user.id);
-      if (result.error) { setMessage(result.error.message); setBusy(false); return; }
+
+      setMessage('Your profile has been saved.');
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not save your profile. Please retry.');
+    } finally {
+      setBusy(false);
     }
-    setMessage('Your profile has been saved.'); setBusy(false); router.refresh();
   }
   async function signOut(){const {error}=await createClient().auth.signOut();if(!error)location.href='/';else setMessage(error.message);}
   return <form className="profile-form" onSubmit={submit}>
