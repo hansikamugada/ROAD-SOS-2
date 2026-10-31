@@ -1,0 +1,17 @@
+.navbar:not(.navbar-auth){background:#142832;border-color:#31434a;color:#f4f1e8;box-shadow:0 3px 16px #122b3215}
+.navbar:not(.navbar-auth) .logo{color:#f4f1e8}
+.navbar:not(.navbar-auth) .navlinks a:not(.btn){color:#bfcbc3}
+.navbar:not(.navbar-auth) .navlinks a:not(.btn):hover{color:#f28b64}
+.navbar:not(.navbar-auth) .navlinks .btn-dark,.navbar:not(.navbar-auth)>.container>.btn-dark{background:#e5ddd0;color:#172a32}
+.login-page{width:100%;max-width:none;min-height:calc(100vh - 72px);padding:54px 18px 80px;background-color:#f1efe6;background-image:linear-gradient(90deg,#e4e0d4 1px,transparent 1px),linear-gradient(#e4e0d4 1px,transparent 1px);background-size:34px 34px}
+.login-page .login-card{margin:0 auto;width:min(480px,100%);max-width:480px;padding:30px;border-radius:9px;border-top:4px solid #e36a43;background:#fffdf8;box-shadow:0 16px 48px #263a3216}
+.login-page .login-card h1{font:700 31px/1.15 Manrope,Arial,sans-serif;letter-spacing:-1.1px;color:#172a32;margin:8px 0}
+.login-page .login-card>p.muted{font-size:13px;line-height:1.55;color:#788286;margin:8px 0 19px}
+.login-page .login-card .field{margin:13px 0}
+.login-page .login-card .field label{font-size:11px;color:#636e75}
+.login-page .login-card .field input{background:#fff;border-color:#e2e4de;border-radius:5px;font-size:13px;padding:12px 13px}
+.login-page .login-card .btn-dark{background:#192a38;color:white;border-radius:5px}
+.login-page .login-card .eyebrow{font:9px 'DM Mono',monospace;color:#a3715a}
+.login-page .login-card>.notice{margin-top:12px;border:1px solid #f1d2c7;border-radius:5px;background:#fff2ed;color:#af4633}
+.login-page .login-switch{border-color:#e8e5dc;color:#737e83;font-size:12px}
+@media(max-width:760px){.login-page{padding:35px 16px 65px}.login-page .login-card{padding:25px 20px}}
