@@ -6,7 +6,7 @@ import { MechanicRequestActions } from '@/components/mechanic-request-actions';
 export const dynamic = 'force-dynamic';
 
 export default async function MechanicDashboard() {
-  const { user, supabase } = await requireUser();
+  const { user, supabase } = await requireUser('/mechanic/login');
   const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'mechanic' && profile?.role !== 'admin') redirect('/dashboard');
   const [{ data: mechanic }, { data: requests }] = await Promise.all([

@@ -1,0 +1,8 @@
+.account-actions{display:flex;align-items:center;gap:10px}
+.header-signout{padding:8px 10px;border:0;border-radius:8px;background:transparent;color:#68757e;font-size:12px;font-weight:700;cursor:pointer}
+.header-signout:hover{background:#f4f5f5;color:#142333}
+.nav-mobile-actions{display:none}
+.login-card{border-radius:18px;box-shadow:0 14px 48px #1423330d}
+.login-switch{border-top:1px solid #edf0f1;padding-top:15px;margin-top:14px;font-size:13px;color:#69757d}
+.login-switch a{color:#e8642e;font-weight:800;margin-left:4px}
+@media(max-width:760px){.account-actions{gap:3px}.account-name{display:none}.header-signout{font-size:11px;padding:7px 6px}.nav-mobile-actions{display:flex;align-items:center;gap:7px}.nav-mobile-actions .btn{font-size:11px;padding:10px 9px;white-space:nowrap}.navlinks{display:none}}

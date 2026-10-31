@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { SignOutButton } from '@/components/sign-out-button';
 
 export async function Header() {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export async function Header() {
     <Link href={user ? dashboard : '/'} className="logo">ROAD<span>SOS</span></Link>
     {user ? <>
       <nav className="navlinks"><Link href="/about">About</Link><Link href={dashboard}>Dashboard</Link>{profile?.role === 'mechanic' ? <Link href="/mechanic/dashboard">Service requests</Link> : <Link href="/find-mechanics">Find mechanics</Link>}</nav>
-      <Link className="account-chip" href="/profile"><span className="avatar">{(profile?.full_name || user.email || 'R').trim().slice(0,1).toUpperCase()}</span><span className="account-name">{profile?.full_name?.split(' ')[0] || 'My profile'}</span><span className="account-arrow">⌄</span></Link>
-    </> : <><nav className="navlinks"><Link href="/about">About</Link><Link href="/find-mechanics">Find mechanics</Link><Link href="/mechanic/register">For mechanics</Link><Link href="/auth/login">Log in</Link><Link className="btn btn-dark" href="/auth/register">Get help</Link></nav><Link className="btn btn-dark nav-signin" href="/auth/login">Sign in</Link></>}
+      <div className="account-actions"><Link className="account-chip" href="/profile"><span className="avatar">{(profile?.full_name || user.email || 'R').trim().slice(0,1).toUpperCase()}</span><span className="account-name">{profile?.full_name?.split(' ')[0] || 'My profile'}</span><span className="account-arrow">⌄</span></Link><SignOutButton/></div>
+    </> : <><nav className="navlinks"><Link href="/about">About</Link><Link href="/find-mechanics">Find mechanics</Link><Link href="/mechanic/register">For mechanics</Link><Link href="/mechanic/login">Mechanic sign in</Link><Link href="/auth/login">Log in</Link><Link className="btn btn-dark" href="/auth/register">Get help</Link></nav><div className="nav-mobile-actions"><Link className="btn btn-dark nav-signin" href="/auth/login">Driver sign in</Link><Link className="btn btn-line nav-signin" href="/mechanic/login">Mechanic sign in</Link></div></>}
   </div></header>;
 }
