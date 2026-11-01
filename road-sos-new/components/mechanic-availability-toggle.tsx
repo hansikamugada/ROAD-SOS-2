@@ -93,14 +93,25 @@ export function MechanicServiceLocation({
     navigator.geolocation.getCurrentPosition(async (position) => {
       const point = { latitude: position.coords.latitude, longitude: position.coords.longitude };
       try {
-        const { data, error } = await createClient()
+        const client = createClient();
+        const { error } = await client
           .from('mechanics')
           .update({ latitude: point.latitude, longitude: point.longitude })
-          .eq('id', userId)
-          .select('latitude,longitude')
-          .single();
+          .eq('id', userId);
         if (error) throw error;
-        setLocation({ latitude: data.latitude, longitude: data.longitude });
+        const { data: saved, error: readError } = await client
+          .from('mechanics')
+          .select('id,latitude,longitude')
+          .eq('id', userId)
+          .maybeSingle();
+        if (readError) throw readError;
+        if (!saved) {
+          throw new Error('Your mechanic profile could not be found. Refresh the page and sign in again.');
+        }
+        if (Math.abs(Number(saved.latitude) - point.latitude) > 0.000001 || Math.abs(Number(saved.longitude) - point.longitude) > 0.000001) {
+          throw new Error('Supabase did not save the workshop location. Check the mechanic self-update policy, then retry.');
+        }
+        setLocation({ latitude: saved.latitude, longitude: saved.longitude });
         setMessage('Service location saved. Nearby drivers can now find your workshop when you are online.');
         router.refresh();
       } catch (error) {
