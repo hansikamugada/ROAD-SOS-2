@@ -32,7 +32,14 @@ export function MechanicAvailabilityToggle({
       setAvailable(data.available);
       setMessage(data.available ? 'You are online and can receive requests.' : 'You are offline and will not receive new requests.');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Availability could not be updated. Please try again.');
+      const databaseError = error && typeof error === 'object' ? error as { code?: string; message?: string } : null;
+      if (databaseError?.code === '42501') {
+        setMessage('Supabase blocked this change with its row security rules. Apply the mechanic availability migration, then try again.');
+      } else if (databaseError?.code === 'PGRST116') {
+        setMessage('Your mechanic record could not be found. Sign out, sign in again, and retry.');
+      } else {
+        setMessage(databaseError?.message || (error instanceof Error ? error.message : 'Availability could not be updated. Please try again.'));
+      }
     } finally {
       setPendingChoice(null);
     }
