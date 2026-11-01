@@ -12,10 +12,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     return <main className="container section"><div className="card admin-access-card"><div className="eyebrow">ADMIN ACCESS REQUIRED</div><h1>This account can’t manage ROAD SOS yet</h1><p className="muted">The admin workspace is at <strong>/admin</strong>. A project owner can enable it in Supabase: open <strong>Table Editor → public → profiles</strong>, find your account, and set its <strong>role</strong> to <strong>admin</strong>. Sign out and back in afterward.</p><p className="muted">Only project owners can grant admin access. Drivers and mechanics can’t approve their own accounts.</p><div className="admin-access-actions"><Link className="btn btn-dark" href="/admin/login">Admin sign in</Link><Link className="btn btn-line" href="/dashboard">Back to my dashboard</Link></div></div></main>;
   }
 
-  const [notice, users, mechanics, pending, active, sos, queueResult, sosResult, requestsResult] = await Promise.all([
+  const [notice, users, mechanics, mechanicProfiles, pending, active, sos, queueResult, sosResult, requestsResult] = await Promise.all([
     searchParams,
     supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'user'),
-    supabase.from('mechanics').select('*', { count: 'exact', head: true }),
+    supabase.from('mechanics').select('id', { count: 'exact' }),
+    supabase.from('profiles').select('id,full_name').eq('role', 'mechanic'),
     supabase.from('mechanics').select('*', { count: 'exact', head: true }).eq('verified', false),
     supabase.from('assistance_requests').select('*', { count: 'exact', head: true }).not('status', 'in', '("completed","cancelled","rejected")'),
     supabase.from('sos_requests').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -23,6 +24,8 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     supabase.from('sos_requests').select('id,user_id,latitude,longitude,created_at').eq('status', 'active').order('created_at', { ascending: false }).limit(10),
     supabase.from('assistance_requests').select('id,user_id,mechanic_id,breakdown_type,status,created_at').not('status', 'in', '("completed","cancelled","rejected")').order('created_at', { ascending: false }).limit(10),
   ]);
+  const registeredMechanicIds = new Set((mechanics.data || []).map((row) => row.id));
+  const missingApplications = (mechanicProfiles.data || []).filter((row) => !registeredMechanicIds.has(row.id));
 
   const stats = [
     { label: 'Drivers', value: users.count ?? 0, icon: Users, tone: 'blue' },
@@ -50,6 +53,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       <div className="admin-content">
         <section className="admin-welcome"><div><div className="eyebrow">OPERATIONS OVERVIEW</div><h1>Good day, {(profile.full_name || 'Admin').split(' ')[0]}.</h1><p>Review partner applications and keep roadside support moving.</p></div><div className="admin-date"><BellRing size={16}/> Live service desk</div></section>
         {notice.review === 'approved' && <div className="admin-notice"><Check size={17}/> Mechanic verified. They’re now approved and can be activated for driver searches.</div>}
+        {missingApplications.length > 0 && <div className="admin-recovery-notice"><Wrench size={17}/><span><b>{missingApplications.length} mechanic {missingApplications.length === 1 ? 'account is' : 'accounts are'} missing an application record.</b> This can happen when email confirmation finishes before the application is saved. Ask {missingApplications.length === 1 ? 'the mechanic' : 'these mechanics'} to sign in at the mechanic portal once after the latest deployment; their saved signup details will be restored to this review queue.</span><Link href="/mechanic/login">Mechanic sign in <ArrowRight size={14}/></Link></div>}
 
         <section className="admin-stat-grid" aria-label="Platform overview">
           {stats.map(({ label, value, icon: Icon, tone }) => <article className="admin-stat-card" key={label}><span className={`admin-stat-icon ${tone}`}><Icon size={18}/></span><span className="admin-stat-label">{label}</span><strong>{value.toString().padStart(2, '0')}</strong><small>{label === 'Awaiting review' ? 'Applications to check' : label === 'Live SOS alerts' ? 'Need urgent attention' : 'Current total'}</small></article>)}

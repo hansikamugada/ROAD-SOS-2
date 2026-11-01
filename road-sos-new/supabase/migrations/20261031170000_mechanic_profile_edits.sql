@@ -32,6 +32,16 @@ revoke all on function private.protect_mechanic_review_fields() from public, ano
 
 -- Recover details captured at signup for accounts whose auth trigger created
 -- a profile before the email-confirmation callback returned early.
+-- Some older triggers also left mechanic signups with the default `user` role.
+-- Promote only accounts whose signup metadata identifies a mechanic; admins
+-- and all other roles are left untouched.
+update public.profiles p
+set role = 'mechanic'::public.app_role
+from auth.users u
+where u.id = p.id
+  and p.role = 'user'::public.app_role
+  and u.raw_user_meta_data ->> 'account_type' = 'mechanic';
+
 insert into public.mechanics (
   id, mechanic_name, phone, garage_name, services, address,
   service_radius_km, working_hours, vehicle_types

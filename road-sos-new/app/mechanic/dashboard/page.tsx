@@ -8,12 +8,35 @@ export const dynamic = 'force-dynamic';
 
 export default async function MechanicDashboard() {
   const { user, supabase } = await requireUser('/mechanic/login');
-  const { data: profile } = await supabase.from('profiles').select('role,full_name').eq('id', user.id).maybeSingle();
+  const { data: profile } = await supabase.from('profiles').select('role,full_name,phone,address').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'mechanic' && profile?.role !== 'admin') redirect('/dashboard');
-  const [{ data: mechanic }, { data: requests }] = await Promise.all([
+  const [mechanicResult, { data: requests }] = await Promise.all([
     supabase.from('mechanics').select('*').eq('id', user.id).maybeSingle(),
     supabase.from('assistance_requests').select('id,breakdown_type,status,created_at,latitude,longitude,profiles(full_name,phone)').eq('mechanic_id', user.id).order('created_at', { ascending: false }),
   ]);
+  let mechanic = mechanicResult.data;
+  if (!mechanic && profile.role === 'mechanic') {
+    const metadata = user.user_metadata || {};
+    const radius = Number(metadata.service_radius_km || 15);
+    const { data: repaired, error: repairError } = await supabase.from('mechanics').insert({
+      id: user.id,
+      mechanic_name: String(metadata.mechanic_name || metadata.full_name || profile.full_name || 'Mechanic'),
+      phone: String(metadata.phone || profile.phone || ''),
+      garage_name: String(metadata.garage_name || ''),
+      services: String(metadata.services || '').split(',').map((item) => item.trim()).filter(Boolean),
+      address: String(metadata.address || profile.address || ''),
+      service_radius_km: Number.isFinite(radius) && radius >= 1 && radius <= 300 ? radius : 15,
+      working_hours: String(metadata.working_hours || ''),
+      vehicle_types: String(metadata.vehicle_types || '').split(',').map((item) => item.trim()).filter(Boolean),
+      available: false,
+      verified: false,
+    }).select('*').maybeSingle();
+    if (!repairError) mechanic = repaired;
+    else if (repairError.code === '23505') {
+      const { data: existing } = await supabase.from('mechanics').select('*').eq('id', user.id).maybeSingle();
+      mechanic = existing;
+    }
+  }
   const items = requests ?? [];
   const open = items.filter(r => ['waiting','accepted','on_the_way','arrived','in_progress'].includes(r.status));
   const completed = items.filter(r => r.status === 'completed').length;

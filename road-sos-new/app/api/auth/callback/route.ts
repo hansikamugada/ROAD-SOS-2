@@ -46,7 +46,14 @@ export async function GET(request: NextRequest) {
   // The auth trigger may have created this profile before email confirmation.
   // Do not return early: registration details in user metadata still need to be
   // copied into the vehicle, contact, or mechanic tables.
-  const role = existing?.role || (metadata.account_type === 'mechanic' ? 'mechanic' : 'user');
+  // Older Auth triggers may have inserted the profile with the default `user`
+  // role before the mechanic email-confirmation callback ran. Restore the
+  // mechanic role from the original signup metadata, but never override admin.
+  const role = existing?.role === 'admin'
+    ? 'admin'
+    : metadata.account_type === 'mechanic'
+      ? 'mechanic'
+      : existing?.role || 'user';
   if (!existing) {
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: user.id,
@@ -56,6 +63,12 @@ export async function GET(request: NextRequest) {
       role,
     });
     if (profileError) {
+      response.headers.set('location', new URL('/auth/login?error=profile', url.origin).toString());
+      return response;
+    }
+  } else if (existing.role !== role) {
+    const { error: roleError } = await supabase.from('profiles').update({ role }).eq('id', user.id);
+    if (roleError) {
       response.headers.set('location', new URL('/auth/login?error=profile', url.origin).toString());
       return response;
     }
